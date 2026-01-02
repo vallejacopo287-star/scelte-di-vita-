@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Scelte di Vita Interattivo</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    color: #fff;
+    text-align: center;
+    padding: 30px;
+    transition: background 0.5s;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    overflow: hidden;
+}
+.box {
+    max-width: 500px;
+    margin: auto;
+    background: rgba(34,34,34,0.85);
+    padding: 20px;
+    border-radius: 10px;
+    position: relative;
+    z-index: 2;
+}
+button {
+    padding: 12px 20px;
+    margin: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+button:hover { background: #555; }
+.money { font-size: 24px; color: #4caf50; }
+.effect {
+    position: absolute;
+    width: 150px;
+    pointer-events: none;
+    z-index: 1;
+}
+#rewardBtn {
+    margin-top: 10px;
+    background-color: gold;
+    color: black;
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>Scelte di Vita</h1>
+    <p>Età: <span id="age">18</span></p>
+    <p class="money">Soldi: €<span id="money">1000</span></p>
+
+    <h3 id="question"></h3>
+
+    <button id="yesBtn" onclick="choose(1)">SÌ</button>
+    <button id="noBtn" onclick="choose(0)">NO</button>
+
+    <p id="result" style="min-height:40px;"></p>
+    <p>Turno: <span id="turn">1</span></p>
+    <button id="rewardBtn" onclick="rewardVideo()">Guarda un video per guadagnare €</button>
+</div>
+
+<img id="explosion" class="effect" src="https://i.imgur.com/UH3IPXw.gif" style="display:none;">
+<img id="fire" class="effect" src="https://i.imgur.com/jX9S4gJ.gif" style="display:none;">
+
+<script>
+let age = 18;
+let money = 1000;
+let turn = 1;
+
+const scenarios = [
+    { q: "Ti piacerebbe fare un lavoro stressante ma ben pagato?", yes: 500, no: -100, bg:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80" },
+    { q: "Investi in una startup rischiosa?", yes: 800, no: 0, bg:"https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80" },
+    { q: "Ti concedi una vacanza costosa?", yes: -400, no: 100, bg:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" },
+    { q: "Apri un business online?", yes: 600, no: -50, bg:"https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80" },
+    { q: "Investi in criptovalute rischiose?", yes: 700, no: 0, bg:"https://images.unsplash.com/photo-1605902711622-cfb43c443b4b?auto=format&fit=crop&w=800&q=80" },
+    { q: "Acquisti un’auto nuova di lusso?", yes: -300, no: 50, bg:"https://images.unsplash.com/photo-1519648023493-d82b5f8d7b9a?auto=format&fit=crop&w=800&q=80" },
+    { q: "Partecipi a un corso costoso per migliorare le competenze?", yes: 200, no: -20, bg:"https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80" },
+    { q: "Prendi un secondo lavoro serale?", yes: 300, no: -10, bg:"https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=800&q=80" },
+    { q: "Fai un viaggio in un Paese esotico?", yes: -500, no: 50, bg:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" },
+    { q: "Vendi qualcosa di valore che possiedi?", yes: 400, no: 0, bg:"https://images.unsplash.com/photo-1549921296-3b118cf5f7b7?auto=format&fit=crop&w=800&q=80" },
+    { q: "Acquisti azioni di una grande compagnia?", yes: 600, no: 0, bg:"https://images.unsplash.com/photo-1551836022-ef8bdf3a05a1?auto=format&fit=crop&w=800&q=80" },
+    { q: "Rinunci a un hobby costoso?", yes: 100, no: -50, bg:"https://images.unsplash.com/photo-1549921296-3b118cf5f7b7?auto=format&fit=crop&w=800&q=80" },
+    { q: "Inviti amici a cena costosa?", yes: -200, no: 20, bg:"https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=800&q=80" },
+    { q: "Fai beneficenza?", yes: -150, no: 0, bg:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80" },
+    { q: "Risparmi tutto il mese senza spendere nulla?", yes: 300, no: -50, bg:"https://images.unsplash.com/photo-1519682577862-22b62b24e493?auto=format&fit=crop&w=800&q=80" }
+];
+
+function newScenario() {
+    const s = scenarios[Math.floor(Math.random() * scenarios.length)];
+    document.getElementById("question").innerText = s.q;
+    window.current = s;
+    document.body.style.backgroundImage = `url(${s.bg})`;
+}
+
+function showEffect(type) {
+    const effect = type === "yes" ? document.getElementById("fire") : document.getElementById("explosion");
+    effect.style.left = "calc(50% - 75px)";
+    effect.style.top = "200px";
+    effect.style.display = "block";
+    setTimeout(() => { effect.style.display = "none"; newScenario(); }, 1000);
+}
+
+function choose(answer) {
+    let change = answer ? current.yes : current.no;
+    money += change;
+    turn++;
+
+    document.getElementById("money").innerText = money;
+    document.getElementById("turn").innerText = turn;
+
+    document.getElementById("result").innerHTML =
+        change >= 0 ? "<span style='color:#4caf50'>Bravo! Hai guadagnato €" + change + "</span>" :
+        "<span style='color:#f44336'>Ops! Hai perso €" + Math.abs(change) + "</span>";
+
+    if(answer){
+        document.getElementById("yesBtn").style.backgroundColor = "#4caf50";
+        document.getElementById("noBtn").style.backgroundColor = "";
+        showEffect("yes");
+    } else {
+        document.getElementById("noBtn").style.backgroundColor = "#f44336";
+        document.getElementById("yesBtn").style.backgroundColor = "";
+        showEffect("no");
+    }
+
+    if(money <= 0){
+        document.body.innerHTML = "<h1>GAME OVER</h1><button onclick='location.reload()'>Ricomincia</button>";
+    }
+}
+
+// Simulazione reward video
+function rewardVideo(){
+    money += 500; 
+    document.getElementById("money").innerText = money;
+    alert("Hai guadagnato €500! Guarda un video per guadagnare soldi.");
+}
+
+newScenario();
+</script>
+</body>
+</html>
